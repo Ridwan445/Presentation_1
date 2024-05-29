@@ -21,7 +21,7 @@ router.delete("/delete-student/:id", authenticate, expelledStudents)
 router.get("/profile/:name", viewProfile)
 router.get("/all/students", authenticate, viewStudentProfile)
 router.post("/login-student", studentLogin)
-router.post("/submit-assignment/:id", submitAssignment)
+router.post("/submit-assignment", submitAssignment)
 router.patch("/manage/student-account/:id", authenticate, manageStudentProfile)
 router.post("/logout-student/:id", studentLogout)
 

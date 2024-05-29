@@ -2,6 +2,7 @@ const teacherModel = require("../models/teachers.model")
 const assignmentModel = require("../models/assignment.model")
 const jwt = require("jsonwebtoken")
 const bcrypt = require('bcrypt');
+const submissionModel = require("../models/submission.model");
 
 
 const registerTeacher =  async (req, res) => {
@@ -31,10 +32,10 @@ const registerTeacher =  async (req, res) => {
 }
 const updateTeacher = async (req, res) => {
   const teacherId = req.params.id
-  const { name, phone } = req.body;
+  const isRegistered = req.body;
   try {
     
-    if (!name && !phone)
+    if (!isRegistered)
       return res.status(400).json({ error: "PLEASE INPUT ALL FIELDS" });
 
       const teacher = await teacherModel.findById(teacherId);
@@ -43,8 +44,7 @@ const updateTeacher = async (req, res) => {
           error: "THIS TEACHER NAME DOES NOT EXIST",
         });
 
-        if (name) teacher.name = name;
-        if (phone) teacher.phone = phone;
+        if (isRegistered) teacher.isRegistered = true;
     
 
         await teacher.save();
@@ -119,19 +119,18 @@ const postAssignment = async (req, res) => {
   if(auth !== api_key){
     return res.status(401).json({message: "ONLY TEACHERS CAN USE THIS ROUTES"})
   }
-  const { createdBy, subject, dateOfSubmission} = req.body
+  const { subject, description, dueDate } = req.body;
+  const assignment = await assignmentModel.create({
+    subject,
+    description,
+    dueDate,
+  });
+
   try {
-    if(!subject && !createdBy && !dateOfSubmission) {
-      return res.status(401).json({message: "FILL THIS FIELD"})
-    }
-    const assignment = await assignmentModel.create({
-      createdBy,
-      subject,
-      dateOfSubmission,
-    })
-    res.status(201).json({message:"ASSIGNMENT POSTED SUCCESSFULLY", data: assignment})
+    const savedAssignment = await assignment.save();
+    res.status(201).json(savedAssignment);
   } catch (error) {
-    res.status(500).json(error)
+    res.status(400).json({ message: error.message });
   }
 }
 
@@ -141,30 +140,23 @@ const gradeAssignment = async (req, res) => {
     if(auth !== api_key){
       return res.status(401).json({message: "ONLY TEACHERS CAN USE THIS ROUTES"})
     }
-    const studentId = req.params.id
-    const {answer, graded, passed} = req.body;
+    const { id } = req.params;
+    const { graded, passed, } = req.body;
+  
     try {
-      if (!graded && !answer && !passed)
-        return res.status(400).json({ error: "PLEASE INPUT ALL FIELDS" });
+      const submission = await submissionModel.findById(id)
   
-        const student = await studentModel.findById(studentId);
-        if (!studentId)
-          return res.status(404).json({
-            error: "STUDENT WITH THE ID " + student + " DOES NOT EXIST",
-          });
+      if (!submission) {
+        return res.status(404).json({ message: 'Submission not found' });
+      }
   
-          if (graded) student.graded = graded;
-          if (answer) student.answer = answer;
-          if (passed) student.passed = passed;
-      
+     if(graded) submission.graded = true;
+      if(passed) submission.passed = true
+      const updatedSubmission = await submission.save();
   
-      return res.status(200).json({
-        message: "STUDENT INFORMATION UPDATED SUCCESSFULLY",
-        student,
-      });
+      res.status(200).json(updatedSubmission);
     } catch (error) {
-      console.log(error);
-      return res.sendStatus(500);
+      res.status(400).json({ message: error.message });
     }
 }
 

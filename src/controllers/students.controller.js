@@ -1,7 +1,8 @@
 const studentModel = require("../models/students.model")
-const assignmentModel = require("../models/assignment.model")
+const submissionModel = require("../models/submission.model")
 const jwt = require("jsonwebtoken")
 const bcrypt = require('bcrypt');
+const assignmentModel = require("../models/assignment.model");
 
 
 const registerStudents =  async (req, res) => {
@@ -155,7 +156,7 @@ const manageStudentProfile = async (req, res) => {
           error: "STUDENT WITH THE ID " + student + " DOES NOT EXIST",
         });
 
-        if (isRegistered) student.isRegistered = isRegistered;
+        if (isRegistered) student.isRegistered = true;
     
 
     return res.status(200).json({
@@ -189,23 +190,20 @@ const auth = req.headers["api-key"]
 if(auth !== api_key){
   return res.status(401).json({message: "ONLY STUDENTS CAN USE THIS ROUTES"})
 }
-  try {
-    const assignmentId = req.params.id
-   const assignment = await assignmentModel.findById(assignmentId)
-     if(!assignmentId) return res.status(400).json({error: "Assignment not seen"})
-      const {submittedBy, answer, passed, graded} = req.body
-      const submit = await assignmentModel.create({
+const { submittedBy, content} = req.body
+    try {
+      const submission = await submissionModel.create({
         submittedBy,
-        answer,
-        passed,
-        graded,
-      })
-    res.status(201).send({message: 'Assignment submitted successfully By', data: submit, assignment});
-  } catch (error) {
-    console.log(error)
-    res.status(400).json(error);
-  }
+        content,
+      });
+  
+      const savedSubmission = await submission.save();
+      res.status(201).json(savedSubmission);
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
 }
+
 
   const studentLogout = async (req, res) => {
     const api_key = "student";

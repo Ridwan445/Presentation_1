@@ -2,6 +2,8 @@ const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
 const adminModel = require("../models/admin.model");
 const teacherModel = require("../models/teachers.model");
+const studentModel = require("../models/students.model");
+const submissionModel = require("../models/submission.model");
 
 
 const adminRegistration  = async (req, res) => {
@@ -78,6 +80,17 @@ const modifySetting = async (req, res) => {
       res.status(500)
     }
   }
+  const generatePerformance = async (req, res) => {
+  try {
+    const students = await studentModel.find({});
+   const submissions = await submissionModel.find({})
+   res.status(200).json({message: "All students report generated", data: submissions})
+  }catch (error) {
+    console.error('Error generating performance report:', error);
+    res.status(500).json({ message: 'Internal server error' });
+}
+  
+}
 
 const logoutAdmin = async (req, res) => {
     try { 
@@ -101,5 +114,6 @@ module.exports = {
   loginAdmin,
   viewSetting,
   modifySetting,
-  logoutAdmin
+  logoutAdmin,
+  generatePerformance,
 }
